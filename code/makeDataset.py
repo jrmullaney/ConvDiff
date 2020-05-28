@@ -34,4 +34,4 @@ class SampleDataset(Dataset):
         return len(self.images)
     
     def __getitem__(self, idx):
-        return self.images[idx,:,:,:], self.truth[idx,:,:]
+        return self.images[idx,:,:,:], self.truth[idx,:,:,:]
