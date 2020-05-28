@@ -7,6 +7,8 @@ class SampleDataset(Dataset):
         images = np.zeros([100,2,256,256])
         truth = np.zeros([100,1,256,256])
         
+        images += np.random.normal(size=images.shape)
+
         y, x = np.mgrid[0:256, 0:256]
         for i in range(images.shape[0]):
             
@@ -14,12 +16,12 @@ class SampleDataset(Dataset):
             
             pos = np.random.uniform(low=0, high=255, size=[6,2])
             for j in range(pos.shape[0]-1):
-                data = data + Gaussian2D(1, pos[j,0], pos[j,1], 5, 5, theta=0.5)(x, y)
+                data = data + Gaussian2D(5, pos[j,0], pos[j,1], 5, 5, theta=0.5)(x, y)
     
-            images[i,0,...] = data
+            images[i,0,...] += data
     
-            extra = Gaussian2D(1, pos[5,0], pos[5,1], 5, 5, theta=0.5)(x, y)
-            images[i,1,...] = data + extra
+            extra = Gaussian2D(5, pos[5,0], pos[5,1], 5, 5, theta=0.5)(x, y)
+            images[i,1,...] += data + extra
             
             mask = np.zeros_like(data)
             mask = extra
