@@ -16,7 +16,7 @@ optimizer = optim.Adam(net.parameters())
 
 # Generate and load the dataset
 dataset = SampleDataset()
-loader = DataLoader(dataset,batch_size=2, shuffle=True, num_workers=2)
+loader = DataLoader(dataset,batch_size=1, shuffle=True, num_workers=2)
 
 for epoch in range(2):
 
