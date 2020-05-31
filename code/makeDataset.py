@@ -12,18 +12,28 @@ class SampleDataset(Dataset):
         y, x = np.mgrid[0:imsize, 0:imsize]
         for i in range(images.shape[0]):
             
-            data = np.zeros([imsize,imsize])
-            
             pos = np.random.uniform(low=0, high=imsize-1, size=[6,2])
+            fwhm = np.random.normal(5,1,2)
             for j in range(pos.shape[0]-1):
-                data = data + Gaussian2D(5, pos[j,0], pos[j,1], 5, 5, theta=0.5)(x, y)
-    
-            images[i,0,...] += data
-    
-            extra = Gaussian2D(5, pos[5,0], pos[5,1], 5, 5, theta=0.5)(x, y)
-            images[i,1,...] += data + extra
+                images[i,0,...] += Gaussian2D(
+                    5, pos[j,0], pos[j,1], 
+                    fwhm[0], fwhm[0], 
+                    theta=0.5
+                    )(x, y)
+                images[i,1,...] += Gaussian2D(
+                    5, pos[j,0], pos[j,1], 
+                    fwhm[1], fwhm[1], 
+                    theta=0.5
+                    )(x, y)
+        
+            extra = Gaussian2D(
+                5, pos[5,0], pos[5,1],
+                fwhm[1], fwhm[1],
+                theta=0.5
+                )(x, y)
+            images[i,1,...] += extra
             
-            mask = np.zeros_like(data)
+            mask = np.zeros_like(images[1,0,...])
             mask = extra
             truth[i,0,...] = mask
         
