@@ -21,7 +21,7 @@ class SampleDataset(Dataset):
             trans = np.random.normal(0,3,2) if translation else np.zeros(2)
             
             fwhm = np.random.normal(3,0.75,2)
-            fwhm[1] = fwhm[0] if vary_psf else fwhm[1]
+            fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
 
             for j in range(pos.shape[0]-1):
                 images[i,0,...] += Gaussian2D(
