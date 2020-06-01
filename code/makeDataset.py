@@ -11,7 +11,7 @@ class SampleDataset(Dataset):
         
         images = np.zeros([n_images,2,image_size,image_size])
         truth = np.zeros([n_images,1,image_size,image_size])
-        focus = np.zeros([n_images,1,image_size,image_size], dtype=np.bool)
+        focus = np.zeros([n_images,1,image_size,image_size], dtype=int)
 
         images += np.random.normal(size=images.shape)
 
@@ -26,32 +26,38 @@ class SampleDataset(Dataset):
             fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
 
             for j in range(pos.shape[0]-1):
-                images[i,0,...] += Gaussian2D(
+                ref_src = Gaussian2D(
                     intensity[j], 
                     pos[j,0], pos[j,1], 
                     fwhm[0], fwhm[0], 
                     theta=0.5
                     )(x, y)
-                images[i,1,...] += Gaussian2D(
+                
+                sci_src = Gaussian2D(
                     intensity[j], 
                     pos[j,0] + trans[0], pos[j,1] + trans[1],
                     fwhm[1], fwhm[1], 
                     theta=0.5
                     )(x, y)
 
-            extra = Gaussian2D(
+                images[i,0,...] += ref_src
+                images[i,1,...] += sci_src
+                
+                sci_mask = sci_src > intensity[j] / 5
+                focus[i,0,sci_mask] = 1
+
+            extra_src = Gaussian2D(
                 intensity[5], 
                 pos[5,0] + trans[0], pos[5,1] + trans[1],
                 fwhm[1], fwhm[1],
                 theta=0.5
                 )(x, y)
-            images[i,1,...] += extra
+            images[i,1,...] += extra_src
             
-            mask = np.zeros_like(images[1,0,...])
-            mask = extra
-            truth[i,0,...] = mask
+            truth[i,0,...] = extra_src
 
-            focus[i,0,...] += extra > intensity[5] / 5.
+            trans_mask = extra_src > intensity[5] / 5.
+            focus[i,0,trans_mask] = 2 
 
         self.images = images
         self.truth = truth

@@ -25,13 +25,17 @@ for epoch in range(2):
         inputs = data[0].to(device)
         truth = data[1].to(device)
         focus = data[2].to(device)
-        truth[focus] = 100. * truth[focus]
+        
+        src = focus > 0
+        transient = focus == 2
+
+        truth[transient] = 100. * truth[transient]
         
         # Zero the optimizer, get outputs, calculate loss, backprop and step
         optimizer.zero_grad()
         outputs = net(inputs.float())
-        outputs[focus] = 100. * outputs[focus]
-        loss = criterion(outputs, truth.float())
+        outputs[transient] = 100. * outputs[transient]
+        loss = criterion(outputs[src], truth[src].float())
         loss.backward()
         optimizer.step()
 
