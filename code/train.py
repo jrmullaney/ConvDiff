@@ -29,9 +29,9 @@ for epoch in range(2):
         
         # Zero the optimizer, get outputs, calculate loss, backprop and step
         optimizer.zero_grad()
-        outputs = net(inputs.float())[focus]
-        outputs[focus] = 100. * truth[focus]
-        loss = criterion(outputs, focussed_truth.float())
+        outputs = net(inputs.float())
+        outputs[focus] = 100. * outputs[focus]
+        loss = criterion(outputs, truth.float())
         loss.backward()
         optimizer.step()
 
