@@ -30,7 +30,8 @@ class SampleDataset(Dataset):
                     )(x, y)
         
             extra = Gaussian2D(
-                5, pos[5,0], pos[5,1],
+                5, 
+                pos[5,0] + translation[0], pos[5,1] + translation[1],
                 fwhm[1], fwhm[1],
                 theta=0.5
                 )(x, y)
