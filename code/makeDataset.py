@@ -14,7 +14,7 @@ class SampleDataset(Dataset):
             
             pos = np.random.uniform(low=0, high=imsize-1, size=[6,2])
             translation = np.random.normal(0,3,2)
-            fwhm = np.random.normal(5,1,2)
+            fwhm = np.random.normal(4,0.75,2)
             for j in range(pos.shape[0]-1):
                 images[i,0,...] += Gaussian2D(
                     5, 
