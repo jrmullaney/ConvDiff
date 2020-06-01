@@ -23,13 +23,13 @@ for epoch in range(2):
     running_loss = 0.0
     for i, data in enumerate(loader, 0):
         inputs = data[0].to(device)
-        truth = data[1]
-        focus = data[2]
+        truth = data[1].to(device)
+        focus = data[2].to(device)
         focussed_truth = truth[focus]
 
         # Zero the optimizer, get outputs, calculate loss, backprop and step
         optimizer.zero_grad()
-        outputs = net(inputs.float())
+        outputs = net(inputs.float())[focus]
         loss = criterion(outputs, focussed_truth.float())
         loss.backward()
         optimizer.step()
