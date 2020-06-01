@@ -36,7 +36,7 @@ for epoch in range(2):
         optimizer.zero_grad()
         outputs = net(inputs.float())
         outputs[transient] = boost * outputs[transient]
-        loss = criterion(outputs[src], truth[src].float())
+        loss = criterion(outputs, truth.float())
         loss.backward()
         optimizer.step()
 
