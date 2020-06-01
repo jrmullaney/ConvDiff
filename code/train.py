@@ -11,7 +11,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Define the net, loss function, and optimizer:
 net = convDiff()
 net.to(device)
-criterion = nn.L1Loss()
+criterion = nn.L2Loss()
 optimizer = optim.Adam(net.parameters())
 
 # Generate and load the dataset
