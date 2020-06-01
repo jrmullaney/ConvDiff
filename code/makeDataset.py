@@ -13,15 +13,18 @@ class SampleDataset(Dataset):
         for i in range(images.shape[0]):
             
             pos = np.random.uniform(low=0, high=imsize-1, size=[6,2])
+            translation = np.random.normal(0,3,2)
             fwhm = np.random.normal(5,1,2)
             for j in range(pos.shape[0]-1):
                 images[i,0,...] += Gaussian2D(
-                    5, pos[j,0], pos[j,1], 
+                    5, 
+                    pos[j,0], pos[j,1], 
                     fwhm[0], fwhm[0], 
                     theta=0.5
                     )(x, y)
                 images[i,1,...] += Gaussian2D(
-                    5, pos[j,0], pos[j,1], 
+                    5, 
+                    pos[j,0] + translation[0], pos[j,1] + translation[1],
                     fwhm[1], fwhm[1], 
                     theta=0.5
                     )(x, y)
