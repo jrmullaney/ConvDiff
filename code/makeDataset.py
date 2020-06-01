@@ -4,15 +4,15 @@ from astropy.modeling.models import Gaussian2D
 
 class SampleDataset(Dataset):
     def __init__(self, n_images=200, image_size=256):
-        images = np.zeros([n_images,2,imsize,imsize])
-        truth = np.zeros([n_images,1,imsize,imsize])
+        images = np.zeros([n_images,2,image_size,image_size])
+        truth = np.zeros([n_images,1,image_size,image_size])
         
         images += np.random.normal(size=images.shape)
 
-        y, x = np.mgrid[0:imsize, 0:imsize]
+        y, x = np.mgrid[0:image_size, 0:image_size]
         for i in range(images.shape[0]):
             
-            pos = np.random.uniform(low=0, high=imsize-1, size=[6,2])
+            pos = np.random.uniform(low=0, high=image_size-1, size=[6,2])
             translation = np.random.normal(0,3,2)
             fwhm = np.random.normal(4,0.75,2)
             for j in range(pos.shape[0]-1):
