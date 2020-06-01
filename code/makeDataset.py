@@ -3,7 +3,12 @@ import numpy as np
 from astropy.modeling.models import Gaussian2D
 
 class SampleDataset(Dataset):
-    def __init__(self, n_images=200, image_size=256):
+    def __init__(
+        self, 
+        n_images=200, image_size=256, 
+        translation=True, vary_psf=True
+        ):
+        
         images = np.zeros([n_images,2,image_size,image_size])
         truth = np.zeros([n_images,1,image_size,image_size])
         
@@ -13,8 +18,11 @@ class SampleDataset(Dataset):
         for i in range(images.shape[0]):
             
             pos = np.random.uniform(low=0, high=image_size-1, size=[6,2])
-            translation = np.random.normal(0,3,2)
-            fwhm = np.random.normal(4,0.75,2)
+            trans = np.random.normal(0,3,2) if translation else np.zeros(2)
+            
+            fwhm = np.random.normal(3,0.75,2)
+            fwhm[1] = fwhm[0] if vary_psf else fwhm[1]
+
             for j in range(pos.shape[0]-1):
                 images[i,0,...] += Gaussian2D(
                     5, 
@@ -24,14 +32,14 @@ class SampleDataset(Dataset):
                     )(x, y)
                 images[i,1,...] += Gaussian2D(
                     5, 
-                    pos[j,0] + translation[0], pos[j,1] + translation[1],
+                    pos[j,0] + trans[0], pos[j,1] + trans[1],
                     fwhm[1], fwhm[1], 
                     theta=0.5
                     )(x, y)
         
             extra = Gaussian2D(
                 5, 
-                pos[5,0] + translation[0], pos[5,1] + translation[1],
+                pos[5,0] + trans[0], pos[5,1] + trans[1],
                 fwhm[1], fwhm[1],
                 theta=0.5
                 )(x, y)
