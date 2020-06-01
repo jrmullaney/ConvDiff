@@ -28,7 +28,7 @@ for epoch in range(2):
         # Zero the optimizer, get outputs, calculate loss, backprop and step
         optimizer.zero_grad()
         outputs = net(inputs.float())
-        loss = criterion(outputs, truth)
+        loss = criterion(outputs, truth.float())
         loss.backward()
         optimizer.step()
 
