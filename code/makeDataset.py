@@ -3,9 +3,9 @@ import numpy as np
 from astropy.modeling.models import Gaussian2D
 
 class SampleDataset(Dataset):
-    def __init__(self, imsize=256):
-        images = np.zeros([100,2,imsize,imsize])
-        truth = np.zeros([100,1,imsize,imsize])
+    def __init__(self, n_images=200, image_size=256):
+        images = np.zeros([n_images,2,imsize,imsize])
+        truth = np.zeros([n_images,1,imsize,imsize])
         
         images += np.random.normal(size=images.shape)
 
