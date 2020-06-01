@@ -28,13 +28,14 @@ for epoch in range(2):
         
         src = focus > 0
         transient = focus == 2
+        boost = 20.
 
-        truth[transient] = 100. * truth[transient]
+        truth[transient] = boost * truth[transient]
         
         # Zero the optimizer, get outputs, calculate loss, backprop and step
         optimizer.zero_grad()
         outputs = net(inputs.float())
-        outputs[transient] = 100. * outputs[transient]
+        outputs[transient] = boost * outputs[transient]
         loss = criterion(outputs[src], truth[src].float())
         loss.backward()
         optimizer.step()
