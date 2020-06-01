@@ -38,12 +38,6 @@ class SampleDataset(Dataset):
                     fwhm[1], fwhm[1], 
                     theta=0.5
                     )(x, y)
-                focus[i,0,...] += Gaussian2D(
-                    intensity[j], 
-                    pos[j,0] + trans[0], pos[j,1] + trans[1],
-                    fwhm[1], fwhm[1], 
-                    theta=0.5
-                    )(x, y) > intensity[j] / 5.
 
             extra = Gaussian2D(
                 intensity[5], 
