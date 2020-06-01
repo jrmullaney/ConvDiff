@@ -11,7 +11,8 @@ class SampleDataset(Dataset):
         
         images = np.zeros([n_images,2,image_size,image_size])
         truth = np.zeros([n_images,1,image_size,image_size])
-        
+        focus = np.zeros([n_images,1,image_size,image_size], dtype=np.bool)
+
         images += np.random.normal(size=images.shape)
 
         y, x = np.mgrid[0:image_size, 0:image_size]
@@ -37,7 +38,13 @@ class SampleDataset(Dataset):
                     fwhm[1], fwhm[1], 
                     theta=0.5
                     )(x, y)
-        
+                focus[i,0,...] += Gaussian2D(
+                    intensity[j], 
+                    pos[j,0] + trans[0], pos[j,1] + trans[1],
+                    fwhm[1], fwhm[1], 
+                    theta=0.5
+                    )(x, y) > intensity[j] / 5.
+
             extra = Gaussian2D(
                 intensity[5], 
                 pos[5,0] + trans[0], pos[5,1] + trans[1],
@@ -49,12 +56,19 @@ class SampleDataset(Dataset):
             mask = np.zeros_like(images[1,0,...])
             mask = extra
             truth[i,0,...] = mask
-        
+
+            focus[i,0,...] += extra > intensity[5] / 5.
+
         self.images = images
         self.truth = truth
+        self.focus = focus
     
     def __len__(self):
         return len(self.images)
     
     def __getitem__(self, idx):
-        return self.images[idx,:,:,:], self.truth[idx,:,:,:]
+        return (
+            self.images[idx,:,:,:], 
+            self.truth[idx,:,:,:], 
+            self.focus[idx,:,:,:]
+        )
