@@ -20,7 +20,7 @@ class SampleDataset(Dataset):
             
             pos = np.random.uniform(low=0, high=image_size-1, size=[6,2])
             intensity = np.random.uniform(low=5, high=15, size=6)
-            trans = np.random.normal(0,3,2) if translation else np.zeros(2)
+            trans = np.random.normal(0,1,2) if translation else np.zeros(2)
             
             fwhm = np.array([3,3])#)np.random.normal(3,0.75,2)
             fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
