@@ -22,21 +22,22 @@ class SampleDataset(Dataset):
             intensity = np.random.uniform(low=5, high=15, size=6)
             trans = np.random.normal(0,1,2) if translation else np.zeros(2)
             
-            fwhm = np.array([1,1])#)np.random.normal(3,0.75,2)
+            fwhm = np.array([5,5])#)np.random.normal(3,0.75,2)
             fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
+            sigma = fwhm / 2.35482
 
             for j in range(pos.shape[0]-1):
                 ref_src = Gaussian2D(
                     intensity[j], 
                     pos[j,0], pos[j,1], 
-                    fwhm[0], fwhm[0], 
+                    sigma[0], sigma[0], 
                     theta=0.5
                     )(x, y)
                 
                 sci_src = Gaussian2D(
                     intensity[j], 
                     pos[j,0] + trans[0], pos[j,1] + trans[1],
-                    fwhm[1], fwhm[1], 
+                    sigma[1], sigma[1], 
                     theta=0.5
                     )(x, y)
 
@@ -49,7 +50,7 @@ class SampleDataset(Dataset):
             extra_src = Gaussian2D(
                 intensity[5], 
                 pos[5,0] + trans[0], pos[5,1] + trans[1],
-                fwhm[1], fwhm[1],
+                sigma[1], sigma[1],
                 theta=0.5
                 )(x, y)
             images[i,1,...] += extra_src
