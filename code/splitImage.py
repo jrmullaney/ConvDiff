@@ -52,17 +52,25 @@ class splitImage():
         new_px = (new_nx - 1) * self.stride[1] + self.kernel_size[1]
         new_py = (new_ny - 1) * self.stride[0] + self.kernel_size[0]
 
-        pad_x = (new_px - image.shape[3]) // 2
-        pad_y = (new_py - image.shape[2]) // 2
+        self.padx = (new_px - image.shape[3]) // 2
+        self.pady = (new_py - image.shape[2]) // 2
 
-        return f.pad(image, (pad_x, pad_x, pad_y, pad_y))
+        return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
+
+    def cropImage(self, image):
+
+        startx, stopx = self.padx, self.image_shape[3]-self.padx
+        starty, stopy = self.pady, self.image_shape[2]-self.pady
+
+        return image[:, :, starty:stopy, startx:stopx]
 
     def split(self, image):
                 
         image = self.padImage(image)
+        self.image_shape = image.shape
 
-        self.nx = (image.shape[3] - self.kernel_size[1]) // self.stride[1] + 1
-        self.ny = (image.shape[2] - self.kernel_size[0]) // self.stride[0] + 1
+        self.nx = (self.image_shape[3] - self.kernel_size[1]) // self.stride[1] + 1
+        self.ny = (self.image_shape[2] - self.kernel_size[0]) // self.stride[0] + 1
 
         unfolded = self.unfolder(image.float())
         
@@ -89,8 +97,9 @@ class splitImage():
         # Divisor sorts out the normalisation; see torch.nn.Unfold documentation
         im_ones = torch.ones(self.image_shape, dtype = float)
         divisor = folder(self.unfolder(im_ones))
+        image = reconstructed / divisor
 
-        return reconstructed / divisor
+        return self.cropImage(image)
 
     def checkImage(self, image):
         
@@ -110,6 +119,5 @@ class splitImage():
             image.unsqueeze_(0)
         
         image = image.permute(0, 3, 1, 2)
-        self.image_shape = image.shape
 
         return image
