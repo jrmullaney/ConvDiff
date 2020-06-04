@@ -4,6 +4,8 @@ import torch.nn as nn
 from torch.nn import functional as f
 import warnings
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class splitImage():
 
     def __init__(self, kernel_size = 256, overlap = 32):
@@ -95,7 +97,7 @@ class splitImage():
         reconstructed = folder(prefolded)
 
         # Divisor sorts out the normalisation; see torch.nn.Unfold documentation
-        im_ones = torch.ones(self.image_shape, dtype = float)
+        im_ones = torch.ones(self.image_shape, dtype = float).to(device)
         divisor = folder(self.unfolder(im_ones))
         image = reconstructed / divisor
 
