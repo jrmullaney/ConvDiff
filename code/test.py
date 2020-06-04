@@ -11,7 +11,6 @@ si = splitImage(kernel_size=600, overlap=(300,400))
 
 tic = time.process_time()
 patches = si.split(im)
-joined = si.join(patches)
+joined = si.join(patches).permute(0,2,3,1)
 toc = time.process_time()
-
-print(toc-tic)
+print(np.all(np.ravel(im)==np.ravel(joined)))
