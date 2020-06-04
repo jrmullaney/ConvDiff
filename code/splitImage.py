@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as f
 import warnings
+import time
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -94,13 +95,17 @@ class splitImage():
             kernel_size = self.kernel_size,
             stride = self.stride
         )
-        reconstructed = folder(prefolded)
 
+        reconstructed = folder(prefolded)
+        
         # Divisor sorts out the normalisation; see torch.nn.Unfold documentation
-        im_ones = torch.ones(self.image_shape, dtype = float).to(device)
+        if device == torch.device('cuda:0'):
+            im_ones = torch.cuda.FloatTensor(self.image_shape).fill_(1)
+        else:
+            im_ones = torch.ones(self.image_shape, dtype = float)
         divisor = folder(self.unfolder(im_ones))
         image = reconstructed / divisor
-
+        
         return self.cropImage(image)
 
     def checkImage(self, image):
