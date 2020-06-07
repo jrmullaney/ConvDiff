@@ -42,7 +42,7 @@ class StarMaker():
                 raise RuntimeError('Fraction too low. No stars generated after ten attempts')
 
         nstars = mask.sum()
-        intensity = np.random.uniform(low=5, high=15, size=nstars)
+        intensity = np.random.uniform(low=50, high=150, size=nstars)
         
         self.positionMask[mask] = 1.
         self.pointSources[mask] = intensity
@@ -61,21 +61,31 @@ class StarMaker():
 class SampleDataset(Dataset):
     def __init__(
         self, 
-        n_images=200, image_size=1200, 
-        translation=True, vary_psf=True
+        n_images = 200, image_size = (1200, 1800),
+        patch_size = 512, overlap = 54,
+        translation=True, vary_psf=True,
         ):
         
-        image = np.zeros([2,image_size,image_size])
-        truth = np.zeros([1,image_size,image_size])
-        focus = np.zeros([1,image_size,image_size])
+        if isinstance(image_size, int):
+            image_size = (image_size, image_size)
+        elif isinstance(image_size, tuple) and len(image_size) == 2:
+            pass
+        else:
+            raise ValueError(
+                'image_size must either be an int or 2-value tuple.'
+                )
 
-        si = splitImage(kernel_size=512, overlap=64)
+        image = np.zeros([2,image_size[0],image_size[1]])
+        truth = np.zeros([1,image_size[0],image_size[1]])
+        focus = np.zeros([1,image_size[0],image_size[1]])
+
+        si = splitImage(kernel_size = patch_size, overlap = overlap)
         patches = si.split(image)
         n_patches = patches.shape[0]
 
-        patch_image = np.zeros([n_images * n_patches, 2, 512, 512])
-        patch_truth = np.zeros([n_images * n_patches, 1, 512, 512])
-        patch_focus = np.zeros([n_images * n_patches, 1, 512, 512])
+        patch_image = np.zeros([n_images * n_patches, 2, patch_size, patch_size])
+        patch_truth = np.zeros([n_images * n_patches, 1, patch_size, patch_size])
+        patch_focus = np.zeros([n_images * n_patches, 1, patch_size, patch_size])
 
         sm = StarMaker()
 
@@ -91,7 +101,6 @@ class SampleDataset(Dataset):
             
             sm.seedStars(size=image_size, fraction=1e-4)
             trans, transFocus = sm.addPsf(sigma=sigma[1])
-
 
             image[0,...] += ref
             image[1,...] += sci + trans
