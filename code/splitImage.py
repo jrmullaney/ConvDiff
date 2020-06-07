@@ -119,7 +119,7 @@ class splitImage():
                 'Input image must either be a torch Tensor or numpy Array'
                 )
 
-        if (image.shape[0] > image.shape[1] or image.shape[0] > image.shape[2]):
+        if (image.shape[-3] > image.shape[-2] or image.shape[-3] > image.shape[-1]):
             warnings.warn('It looks like the input image may not have the correct dimensions. Ensure: [channels, ydim, xdim]')
 
         while len(image.shape) < 4:
