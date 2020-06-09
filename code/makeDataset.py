@@ -91,7 +91,7 @@ class SampleDataset(Dataset):
 
         for i in range(n_images):
                         
-            fwhm = np.array([5,5])#)np.random.normal(3,0.75,2)
+            fwhm = np.random.normal(3,0.75,2)
             fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
             sigma = fwhm / 2.35482
 
