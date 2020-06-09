@@ -78,14 +78,14 @@ class StarMaker():
         self.positionMask[mask] = 1.
         self.pointSources[mask] = intensity
 
-    def addPsf(self, sigma=3, translate=np.array([0,0])):
+    def addPsf(self, sigma=3, translation=np.array([0,0])):
 
-        if isinstance(translate, np.ndarray) == False or translate.shape != (2,):
+        if isinstance(translation, np.ndarray) == False or translation.shape != (2,):
             raise ValueError("translate must be a 2-element numpy array: [x-shift, y-shift]")
 
         kernel = Gaussian2DKernel(
             x_stddev=sigma, 
-            x_pos=translate[0], y_pos=translate[1]
+            x_pos=translation[0], y_pos=translation[1]
             )
         stars = convolve(self.pointSources, kernel)
         mask = convolve(self.positionMask, kernel)
@@ -100,7 +100,7 @@ class SampleDataset(Dataset):
         self, 
         n_images = 200, image_size = (1200, 1800),
         patch_size = 512, overlap = 54,
-        translation=True, vary_psf=True,
+        translate=True, vary_psf=True,
         ):
         
         if isinstance(image_size, int):
@@ -132,12 +132,14 @@ class SampleDataset(Dataset):
             fwhm[1] = fwhm[1] if vary_psf else fwhm[0]
             sigma = fwhm / 2.35482
 
+            translation = np.random.uniform(low=-3, high=3, size=2) if translate else np.array([0.,0.])
+
             sm.seedStars(size=image_size, fraction=1e-3)
             ref, refFocus = sm.addPsf(sigma=sigma[0]) 
-            sci, sciFocus = sm.addPsf(sigma=sigma[1])
+            sci, sciFocus = sm.addPsf(sigma=sigma[1],translation=translation)
             
             sm.seedStars(size=image_size, fraction=1e-4)
-            trans, transFocus = sm.addPsf(sigma=sigma[1])
+            trans, transFocus = sm.addPsf(sigma=sigma[1],translation=translation)
 
             image[0,...] += ref
             image[1,...] += sci + trans

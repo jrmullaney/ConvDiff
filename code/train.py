@@ -18,7 +18,7 @@ optimizer = optim.Adam(net.parameters())
 dataset = SampleDataset(
     n_images = 10, image_size = (1200,1800), 
     patch_size = 512, overlap = 64,
-    translation = False, vary_psf = True)
+    translation = True, vary_psf = True)
 loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
 
 for epoch in range(2):
