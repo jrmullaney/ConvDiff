@@ -19,7 +19,7 @@ dataset = SampleDataset(
     n_images = 10, image_size = (1200,1800), 
     patch_size = 512, overlap = 64,
     translation = False, vary_psf = False)
-loader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=2)
+loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
 
 for epoch in range(2):
 
