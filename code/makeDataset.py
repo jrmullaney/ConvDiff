@@ -1,9 +1,40 @@
 from torch.utils.data import Dataset
 import numpy as np
+import math
 from splitImage import splitImage
 
-from astropy.convolution import Gaussian2DKernel, convolve
-from astropy.convolution import convolve
+
+from astropy.convolution import Kernel2D, convolve
+from astropy.modeling import models
+
+class Gaussian2DKernel(Kernel2D):
+    
+    '''
+    Re-define Gaussian2DKernel to allow positional offsets
+    '''
+
+    #_separable = True
+    #_is_bool = False
+
+    def __init__(self, x_stddev, y_stddev=None, theta=0.0, x_pos=0.0, y_pos=0.0, **kwargs):
+        if y_stddev is None:
+            y_stddev = x_stddev
+        self._model = models.Gaussian2D(1. / (2 * np.pi * x_stddev * y_stddev),
+                                        x_pos, y_pos, x_stddev=x_stddev,
+                                        y_stddev=y_stddev, theta=theta)
+        self._default_size = self._round_up_to_odd_integer(
+            8 * np.max([x_stddev, y_stddev]))
+        super().__init__(**kwargs)
+        self._truncation = np.abs(1. - self._array.sum())
+
+    @staticmethod
+    def _round_up_to_odd_integer(value):
+        i = math.ceil(value)
+        if i % 2 == 0:
+            return i + 1
+        else:
+            return i
+
 
 class StarMaker():
     def __init__(self):
@@ -47,9 +78,15 @@ class StarMaker():
         self.positionMask[mask] = 1.
         self.pointSources[mask] = intensity
 
-    def addPsf(self, sigma=3):
+    def addPsf(self, sigma=3, translate=np.array([0,0])):
 
-        kernel = Gaussian2DKernel(x_stddev=sigma)
+        if isinstance(translate, np.ndarray) == False or translate.shape != (2,):
+            raise ValueError("translate must be a 2-element numpy array: [x-shift, y-shift]")
+
+        kernel = Gaussian2DKernel(
+            x_stddev=sigma, 
+            x_pos=translate[0], y_pos=translate[1]
+            )
         stars = convolve(self.pointSources, kernel)
         mask = convolve(self.positionMask, kernel)
         mask = mask > 0.2 * mask.max()
