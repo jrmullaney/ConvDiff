@@ -170,3 +170,56 @@ class SampleDataset(Dataset):
             self.truth[idx,:,:,:], 
             self.focus[idx,:,:,:]
         )
+
+class RealDataset(Dataset):
+    from astropy.io import fits
+    import glob
+    import os.path.join as join
+
+    def __init__(
+        self,
+        file_path = None, 
+        patch_size = 512, overlap = 54,
+        ):
+
+        files = glob.glob(join(file_path,'*.fits'))
+        n_files = len(files)
+
+        hdu = fits.read(files[0])
+        image = hdu[1].data
+        image = np.repeat(image[np.newaxis, :, :], 2, axis=0)
+        
+        si = splitImage(kernel_size = patch_size, overlap = overlap)
+        patches = si.split(image)
+        n_patches = patches.shape[0]
+
+        patch_image = np.zeros([n_files * n_patches, 2, patch_size, patch_size])
+        patch_truth = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
+        patch_focus = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
+
+        for file in files:
+            
+            hdu = fits.read(file)
+
+            image[0,...] = hdu[1].data
+            image[1,...] = hdu[2].data
+            truth = hdu[3].data
+            focus = hdu[4].data
+
+            patch_image[n_patches * i:n_patches * (i+1),0,:,:] = si.split(image)
+            patch_truth[n_patches * i:n_patches * (i+1),:,:,:] = si.split(truth)
+            patch_focus[n_patches * i:n_patches * (i+1),:,:,:] = si.split(focus)
+
+        self.image = patch_image
+        self.truth = patch_truth
+        self.focus = patch_focus
+    
+    def __len__(self):
+        return len(self.image)
+    
+    def __getitem__(self, idx):
+        return (
+            self.image[idx,:,:,:], 
+            self.truth[idx,:,:,:], 
+            self.focus[idx,:,:,:]
+        )
