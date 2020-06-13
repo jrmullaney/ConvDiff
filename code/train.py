@@ -15,11 +15,8 @@ criterion = nn.L1Loss()
 optimizer = optim.Adam(net.parameters())
 
 # Generate and load the dataset
-dataset = SampleDataset(
-    n_images = 10, image_size = (1200,1800), 
-    patch_size = 512, overlap = 64,
-    translate = True, vary_psf = True)
-loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
+dataset = RealDataset('../data/', 256, 0)
+loader = DataLoader(dataset, batch_size=1, num_workers=2)
 
 for epoch in range(2):
 
