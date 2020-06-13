@@ -1,4 +1,4 @@
-from makeDataset import SampleDataset
+from makeDataset import RealDataset
 from convDiff_model import convDiff
 
 import torch
@@ -15,7 +15,7 @@ criterion = nn.L1Loss()
 optimizer = optim.Adam(net.parameters())
 
 # Generate and load the dataset
-dataset = RealDataset('../data/', 256, 0)
+dataset = RealDataset('../data/', 512, 0)
 loader = DataLoader(dataset, batch_size=1, num_workers=2)
 
 for epoch in range(2):
