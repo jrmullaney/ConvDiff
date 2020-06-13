@@ -3,9 +3,12 @@ import numpy as np
 import math
 from splitImage import splitImage
 
-
 from astropy.convolution import Kernel2D, convolve
 from astropy.modeling import models
+from astropy.io import fits
+
+import glob
+from os.path import join
 
 class Gaussian2DKernel(Kernel2D):
     
@@ -172,9 +175,6 @@ class SampleDataset(Dataset):
         )
 
 class RealDataset(Dataset):
-    from astropy.io import fits
-    import glob
-    import os.path.join as join
 
     def __init__(
         self,
@@ -185,7 +185,7 @@ class RealDataset(Dataset):
         files = glob.glob(join(file_path,'*.fits'))
         n_files = len(files)
 
-        hdu = fits.read(files[0])
+        hdu = fits.open(files[0])
         image = hdu[1].data
         image = np.repeat(image[np.newaxis, :, :], 2, axis=0)
         
@@ -197,16 +197,21 @@ class RealDataset(Dataset):
         patch_truth = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
         patch_focus = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
 
-        for file in files:
+        for i, file in enumerate(files):
             
-            hdu = fits.read(file)
+            hdu = fits.open(file)
 
             image[0,...] = hdu[1].data
             image[1,...] = hdu[2].data
             truth = hdu[3].data
             focus = hdu[4].data
-
-            patch_image[n_patches * i:n_patches * (i+1),0,:,:] = si.split(image)
+            
+            ### This requirement should be put into splitImage...    
+            truth = truth[np.newaxis,...]
+            focus = focus[np.newaxis,...]
+            ###
+            
+            patch_image[n_patches * i:n_patches * (i+1),:,:,:] = si.split(image)
             patch_truth[n_patches * i:n_patches * (i+1),:,:,:] = si.split(truth)
             patch_focus[n_patches * i:n_patches * (i+1),:,:,:] = si.split(focus)
 
