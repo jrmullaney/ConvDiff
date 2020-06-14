@@ -203,14 +203,14 @@ class RealDataset(Dataset):
 
             image[0,...] = hdu[1].data
             image[1,...] = hdu[2].data
-            truth = hdu[3].data
-            focus = hdu[4].data
+            focus = hdu[3].data
+            truth = hdu[4].data
             
             ### This requirement should be put into splitImage...    
             truth = truth[np.newaxis,...]
             focus = focus[np.newaxis,...]
             ###
-            
+
             patch_image[n_patches * i:n_patches * (i+1),:,:,:] = si.split(image)
             patch_truth[n_patches * i:n_patches * (i+1),:,:,:] = si.split(truth)
             patch_focus[n_patches * i:n_patches * (i+1),:,:,:] = si.split(focus)
