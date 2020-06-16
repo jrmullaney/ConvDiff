@@ -9,6 +9,7 @@ from astropy.io import fits
 
 import glob
 from os.path import join
+import re
 
 class Gaussian2DKernel(Kernel2D):
     
@@ -182,7 +183,7 @@ class RealDataset(Dataset):
         patch_size = 512, overlap = 54,
         ):
 
-        files = glob.glob(join(file_path,'*.fits'))
+        files = glob.glob(join(file_path,'sci_r*.fits'))
         n_files = len(files)
 
         hdu = fits.open(files[0])
@@ -199,13 +200,19 @@ class RealDataset(Dataset):
 
         for i, file in enumerate(files):
             
-            hdu = fits.open(file)
+            runid = re.search('sci_r(.+?).fits', file)
+            ref_file = join(file_path, 'ref_r' + runid.group(1) + '.fits')
 
+            hdu = fits.open(ref_file)
             image[0,...] = hdu[1].data
+            hdu.close()
+
+            hdu = fits.open(file)
             image[1,...] = hdu[2].data
             focus = hdu[3].data
             truth = hdu[4].data
-            
+            hdu.close()
+
             ### This requirement should be put into splitImage...    
             truth = truth[np.newaxis,...]
             focus = focus[np.newaxis,...]
