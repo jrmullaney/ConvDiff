@@ -182,8 +182,9 @@ class RealDataset(Dataset):
         file_path = None, 
         patch_size = 512, overlap = 54,
         ):
-
-        files = glob.glob(join(file_path,'inj_*.fits'))
+        print(join(file_path,'inj_r*.fits'))
+        files = glob.glob(join(file_path,'inj_r*.fits'))
+        print(files)
         n_files = len(files)
 
         hdu = fits.open(files[0])
@@ -200,6 +201,7 @@ class RealDataset(Dataset):
 
         for i, file in enumerate(files):
             
+            hdu = fits.open(file)
             image[0,...] = hdu[1].data
             image[1,...] = hdu[2].data
             focus = hdu[3].data
