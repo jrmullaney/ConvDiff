@@ -28,8 +28,8 @@ for epoch in range(2):
         
         src = focus > 0
         transient = focus == 2
-        src_boost = 1.
-        transient_boost = 100. # Total boost = src_boost * transient_boost
+        src_boost = 5.
+        transient_boost = 10. # Total boost = src_boost * transient_boost
 
         truth[src] = src_boost * truth[src]
         truth[transient] = transient_boost * truth[transient] 
@@ -39,6 +39,7 @@ for epoch in range(2):
         outputs = net(inputs.float())
         outputs[src] = src_boost * outputs[src]
         outputs[transient] = transient_boost * outputs[transient]
+
         loss = criterion(outputs, truth.float())
         loss.backward()
         optimizer.step()

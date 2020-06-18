@@ -15,7 +15,7 @@ torch.backends.cudnn.benchmark = True
 # Load model:
 net = convDiff().to(device)
 net.load_state_dict(
-    torch.load('./TrainedModels/ConvDiff.pth', 
+    torch.load('./TrainedModels/7dc883b.pth', 
                map_location=device)
     )
 
@@ -45,4 +45,4 @@ hdr = fits.Header()
 ext0 = fits.PrimaryHDU(hdr)
 ext1 = fits.CompImageHDU(joined)
 hdul = fits.HDUList([ext0, ext1])
-hdul.writeto('../data/test/out_r255191_2.fits', overwrite=True)
+hdul.writeto('../data/test/out_r255191_2_L1-32.fits', overwrite=True)
