@@ -7,16 +7,16 @@ class convDiff(nn.Module):
     def __init__(self):
         super(convDiff, self).__init__()
         
-        self.inc = ConvRelu(2, 64)
-        self.down1 = Down(64, 128)
-        self.down2 = Down(128, 256)
-        self.down3 = Down(256, 512)
+        self.inc = ConvRelu(2, 32)
+        self.down1 = Down(32, 64)
+        self.down2 = Down(64, 128)
+        self.down3 = Down(128, 256)
         #self.down4 = Down(512, 1024)
         #self.up4 = Up(1024, 512)
-        self.up3 = Up(512, 256)
-        self.up2 = Up(256, 128)
-        self.up1 = Up(128, 64)
-        self.outc = OutConv(64, 1)
+        self.up3 = Up(256, 128)
+        self.up2 = Up(128, 64)
+        self.up1 = Up(64, 32)
+        self.outc = OutConv(32, 1)
         
     def forward(self, x):
         
