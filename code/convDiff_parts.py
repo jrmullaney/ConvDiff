@@ -7,7 +7,10 @@ class ConvRelu(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.conv_relu = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
@@ -20,7 +23,7 @@ class Down(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.down_conv = nn.Sequential(
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             ConvRelu(in_channels, out_channels),
         )
 
