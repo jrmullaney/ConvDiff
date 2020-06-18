@@ -28,8 +28,8 @@ for epoch in range(2):
         
         src = focus > 0
         transient = focus == 2
-        src_boost = 5.
-        transient_boost = 4. # Total boost = src_boost * transient_boost
+        src_boost = 1.
+        transient_boost = 100. # Total boost = src_boost * transient_boost
 
         truth[src] = src_boost * truth[src]
         truth[transient] = transient_boost * truth[transient] 
