@@ -11,8 +11,6 @@ import glob
 from os.path import join
 import re
 
-import time
-
 class Gaussian2DKernel(Kernel2D):
     
     '''
@@ -201,16 +199,13 @@ class RealDataset(Dataset):
 
         for i, file in enumerate(files):
             
-            tic = time.process_time()
             hdu = fits.open(file)
             image = hdu[1].data
             ref = si.padImage(hdu[2].data)[0,0,...]
             focus = hdu[3].data
             truth = hdu[4].data
             hdu.close()
-            toc = time.process_time()
-            print(toc-tic)
-
+            
             x = np.arange(ref.shape[1], dtype=int)
             y = np.arange(ref.shape[0], dtype=int)
             xv, yv = np.meshgrid(x, y)
@@ -219,16 +214,12 @@ class RealDataset(Dataset):
             ref_split = np.zeros_like(vv_split[:,0,:,:], dtype=float)
             for j in range(vv_split.shape[0]):
                 ref_split[j,...] = ref[vv_split[j,1,...],vv_split[j,0,...]]
-            tic = time.process_time()
-            print(tic-toc) 
-
+            
             patch_image[n_patches * i:n_patches * (i+1),0,:,:] = si.split(image)[:,0,:,:]
             patch_image[n_patches * i:n_patches * (i+1),1,:,:] = ref_split[:,:,:]
             patch_truth[n_patches * i:n_patches * (i+1),:,:,:] = si.split(truth)
             patch_focus[n_patches * i:n_patches * (i+1),:,:,:] = si.split(focus)
-            toc = time.process_time()
-            print(toc-tic)
-
+            
         self.image = patch_image
         self.truth = patch_truth
         self.focus = patch_focus
