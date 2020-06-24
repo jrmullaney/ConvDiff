@@ -119,11 +119,12 @@ class splitImage():
                 'Input image must either be a torch Tensor or numpy Array'
                 )
 
+        while len(image.shape) < 4:
+            image.unsqueeze_(0)
+
         if (image.shape[-3] > image.shape[-2] or image.shape[-3] > image.shape[-1]):
             warnings.warn('It looks like the input image may not have the correct dimensions. Ensure: [channels, ydim, xdim]')
 
-        while len(image.shape) < 4:
-            image.unsqueeze_(0)
         
         #image = image.permute(0, 3, 1, 2)
 

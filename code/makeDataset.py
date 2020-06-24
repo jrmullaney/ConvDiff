@@ -208,8 +208,8 @@ class RealDataset(Dataset):
             hdu.close()
 
             ### This requirement should be put into splitImage...    
-            truth = truth[np.newaxis,...]
-            focus = focus[np.newaxis,...]
+            #truth = truth[np.newaxis,...]
+            #focus = focus[np.newaxis,...]
             ###
 
             patch_image[n_patches * i:n_patches * (i+1),:,:,:] = si.split(image)
