@@ -204,6 +204,7 @@ class RealDataset(Dataset):
             hdu = fits.open(file)
             ref = hdu[2].data
             images[0,...] = hdu[1].data
+            images[1,...] = hdu[3].data
             images[3,...] = hdu[3].data
             images[4,...] = hdu[4].data
             hdu.close()
@@ -212,7 +213,7 @@ class RealDataset(Dataset):
             print('Reading:', toc-tic)
 
             images = si.padImage(images)
-            ref = si.padImage(ref)
+            ref = images[0,1,...]
             x = torch.arange(images.shape[2], dtype=int)
             y = torch.arange(images.shape[3], dtype=int)
             xv, yv = torch.meshgrid(x, y)
