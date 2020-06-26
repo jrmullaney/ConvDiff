@@ -229,7 +229,7 @@ class RealDataset(Dataset):
 
             xind = split[:,1,...].long()
             yind = split[:,2,...].long()
-            split[:,1,...] = ref[0,0,yind,xind]
+            split[:,1,...] = ref[yind,xind]
 
             tic = time.process_time()
             print('Referencing:', tic-toc)
