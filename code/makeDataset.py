@@ -240,6 +240,9 @@ class RealDataset(Dataset):
             patches_all[patch_ind,2,:,:] = split[:,3,:,:]
             patches_all[patch_ind,3,:,:] = split[:,4,:,:]
 
+            toc = time.process_time()
+            print('Allocating:', toc-tic)
+
         self.image = patches_all[:,0:1,...]
         #self.truth = patch_truth[:,2,...]
         #self.focus = patch_focus[:,3,...]
