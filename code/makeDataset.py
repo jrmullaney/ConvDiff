@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import numpy as np
 import math
 from splitImage import splitImage
+import torch
 
 from astropy.convolution import Kernel2D, convolve
 from astropy.modeling import models
@@ -10,6 +11,7 @@ from astropy.io import fits
 import glob
 from os.path import join
 import re
+import time
 
 class Gaussian2DKernel(Kernel2D):
     
@@ -188,41 +190,58 @@ class RealDataset(Dataset):
 
         hdu = fits.open(files[0])
         image = hdu[1].data
-        
+        images = np.zeros([5, image.shape[0], image.shape[1]])
+
         si = splitImage(kernel_size = patch_size, overlap = overlap)
         patches = si.split(image)    
         n_patches = patches.shape[0]
 
-        patch_image = np.zeros([n_files * n_patches, 2, patch_size, patch_size])
-        patch_truth = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
-        patch_focus = np.zeros([n_files * n_patches, 1, patch_size, patch_size])
+        patches_all = np.zeros([n_files * n_patches, 4, patch_size, patch_size])
 
         for i, file in enumerate(files):
             
+            tic = time.process_time()
             hdu = fits.open(file)
-            image = hdu[1].data
-            ref = si.padImage(hdu[2].data)[0,0,...]
-            focus = hdu[3].data
-            truth = hdu[4].data
+            ref = hdu[2].data
+            images[0,...] = hdu[1].data
+            images[3,...] = hdu[3].data
+            images[4,...] = hdu[4].data
             hdu.close()
             
-            x = np.arange(ref.shape[1], dtype=int)
-            y = np.arange(ref.shape[0], dtype=int)
-            xv, yv = np.meshgrid(x, y)
-            vv = np.stack((xv, yv), axis=0)
-            vv_split = si.split(vv).long()
-            ref_split = np.zeros_like(vv_split[:,0,:,:], dtype=float)
-            for j in range(vv_split.shape[0]):
-                ref_split[j,...] = ref[vv_split[j,1,...],vv_split[j,0,...]]
+            toc = time.process_time()
+            print('Reading:', toc-tic)
+
+            images = si.padImage(images)
+            ref = si.padImage(ref)
+            x = torch.arange(images.shape[2], dtype=int)
+            y = torch.arange(images.shape[3], dtype=int)
+            xv, yv = torch.meshgrid(x, y)
+            images[0,1,...] = yv
+            images[0,2,...] = xv
             
-            patch_image[n_patches * i:n_patches * (i+1),0,:,:] = si.split(image)[:,0,:,:]
-            patch_image[n_patches * i:n_patches * (i+1),1,:,:] = ref_split[:,:,:]
-            patch_truth[n_patches * i:n_patches * (i+1),:,:,:] = si.split(truth)
-            patch_focus[n_patches * i:n_patches * (i+1),:,:,:] = si.split(focus)
-            
-        self.image = patch_image
-        self.truth = patch_truth
-        self.focus = patch_focus
+            tic = time.process_time()
+            print('Padding:', tic-toc)
+
+            split = si.split(images)
+            toc = time.process_time()
+            print('Splitting:', toc-tic)
+
+            xind = split[:,1,...].long()
+            yind = split[:,2,...].long()
+            split[:,1,...] = ref[0,0,yind,xind]
+
+            tic = time.process_time()
+            print('Referencing:', tic-toc)
+
+            patch_ind = np.arange(n_patches * i,n_patches * (i+1), dtype=int)
+            patches_all[patch_ind,0,:,:] = split[:,0,:,:]
+            patches_all[patch_ind,1,:,:] = split[:,1,:,:]
+            patches_all[patch_ind,2,:,:] = split[:,3,:,:]
+            patches_all[patch_ind,3,:,:] = split[:,4,:,:]
+
+        self.image = patches_all[:,0:1,...]
+        #self.truth = patch_truth[:,2,...]
+        #self.focus = patch_focus[:,3,...]
     
     def __len__(self):
         return len(self.image)
