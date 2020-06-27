@@ -59,8 +59,8 @@ class splitImage():
         self.pady = (new_py - image.shape[2]) // 2
 
         if device == torch.device("cuda:0"):
-            for im in range(image.shape[1]):
-                f.pad(im, (self.padx, self.padx, self.pady, self.pady))
+            for i in range(image.shape[1]):
+                f.pad(image[:,i,...], (self.padx, self.padx, self.pady, self.pady))
 
         return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
 
