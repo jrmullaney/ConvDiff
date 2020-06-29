@@ -13,6 +13,8 @@ from os.path import join
 import re
 import time
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class Gaussian2DKernel(Kernel2D):
     
     '''
@@ -188,30 +190,32 @@ class RealDataset(Dataset):
         files = glob.glob(join(file_path))
         n_files = len(files)
 
-        hdu = fits.open(files[0])
-        image = hdu[1].data
-        images = np.zeros([5, image.shape[0], image.shape[1]])
-
         si = splitImage(kernel_size = patch_size, overlap = overlap)
-        patches = si.split(image)    
-        n_patches = patches.shape[0]
-
-        patches_all = np.zeros([n_files * n_patches, 4, patch_size, patch_size])
-
+        
         for i, file in enumerate(files):
-            
-            tic = time.process_time()
+
+            tic = time.time()
             hdu = fits.open(file)
             ref = hdu[2].data
+            
+            if i == 0:
+                images = np.zeros([5, ref.shape[0], ref.shape[1]])
             images[0,...] = hdu[1].data
             images[1,...] = hdu[3].data
             images[3,...] = hdu[3].data
             images[4,...] = hdu[4].data
             hdu.close()
-            
-            toc = time.process_time()
+            toc = time.time()
             print('Reading:', toc-tic)
-
+            
+            if i == 0:
+                patches = si.split(ref)
+                n_patches = patches.shape[0]
+                patches_all = torch.zeros([n_files * n_patches, 4, patch_size, patch_size])
+            tic = time.time()
+            print('npatch:', tic-toc)
+            toc = time.time()
+            
             images = si.padImage(images)
             ref = images[0,1,...]
             x = torch.arange(images.shape[2], dtype=int)
@@ -219,34 +223,31 @@ class RealDataset(Dataset):
             xv, yv = torch.meshgrid(x, y)
             images[0,1,...] = yv
             images[0,2,...] = xv
-            
-            tic = time.process_time()
+            tic = time.time()
             print('Padding:', tic-toc)
-
+            
             split = si.split(images)
-            toc = time.process_time()
-            print('Splitting:', toc-tic)
 
             xind = split[:,1,...].long()
             yind = split[:,2,...].long()
             split[:,1,...] = ref[yind,xind]
-
-            tic = time.process_time()
-            print('Referencing:', tic-toc)
-
-            patch_ind = np.arange(n_patches * i,n_patches * (i+1), dtype=int)
-            patches_all[patch_ind,0,:,:] = split[:,0,:,:]
-            patches_all[patch_ind,1,:,:] = split[:,1,:,:]
-            patches_all[patch_ind,2,:,:] = split[:,3,:,:]
-            patches_all[patch_ind,3,:,:] = split[:,4,:,:]
-
-            toc = time.process_time()
-            print('Allocating:', toc-tic)
-
+            toc = time.time()
+            print('Splitting:', toc-tic)
+            
+            split = split.cpu()
+            patch_ind = torch.arange(n_patches * i,n_patches * (i+1), dtype=int)
+            patches_all[patch_ind,:,:,:] = split[:,[0,1,3,4],:,:]
+            tic = time.time()
+            print('Allocating:', tic-toc)
+            
         self.image = patches_all[:,0:1,...]
-        #self.truth = patch_truth[:,2,...]
-        #self.focus = patch_focus[:,3,...]
-    
+        self.truth = patches_all[:,2,...]
+        self.focus = patches_all[:,3,...]
+        toc = time.time()
+                
+
+        print('Total:', toc-tic)
+        
     def __len__(self):
         return len(self.image)
     

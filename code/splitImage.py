@@ -55,19 +55,35 @@ class splitImage():
         new_px = (new_nx - 1) * self.stride[1] + self.kernel_size[1]
         new_py = (new_ny - 1) * self.stride[0] + self.kernel_size[0]
 
-        self.padx = (new_px - image.shape[3]) // 2
-        self.pady = (new_py - image.shape[2]) // 2
+        padx = (new_px - image.shape[3]) // 2
+        pady = (new_py - image.shape[2]) // 2
 
-        if device == torch.device("cuda:0"):
-            padded = torch.zeros(image.shape[0], image.shape[1], new_py, new_px)
-            for i in range(image.shape[1]):
-                padded[:,i,...] = f.pad(
-                    image[:,i,...], 
-                    (self.padx, self.padx, self.pady, self.pady)
+        #Only pad if you have to:
+        if padx > 0 or pady > 0:
+
+            self.padx, self.pady = padx, pady
+            
+            if device == torch.device("cuda:0"):
+
+                padded = torch.zeros(image.shape[0], image.shape[1], new_py, new_px)
+
+                for i in range(image.shape[1]):
+
+                    padded[:,i,...] = f.pad(
+                        image[:,i,...], 
+                        (self.padx, self.padx, self.pady, self.pady)
                     )
-            return padded
-        else
-            return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
+
+                return padded
+
+            else:
+
+                return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
+
+        else:
+
+            self.padx, self.pady = 0, 0
+            return image
 
     def cropImage(self, image):
 
@@ -135,5 +151,6 @@ class splitImage():
             warnings.warn('It looks like the input image may not have the correct dimensions. Ensure: [channels, ydim, xdim]')
         
         #image = image.permute(0, 3, 1, 2)
-
+        image = image.to(device)
+        
         return image
