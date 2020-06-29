@@ -9,7 +9,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class splitImage():
 
-    def __init__(self, kernel_size = 256, overlap = 32):
+    def __init__(self, image, kernel_size = 256, overlap = 32):
         
         if isinstance(kernel_size, int):
             self.kernel_size = (kernel_size, kernel_size)
@@ -34,104 +34,13 @@ class splitImage():
             kernel_size = self.kernel_size, 
             stride = self.stride
             )
-
-    def padImage(self, image):
-        '''
-        Function to pad the image so that it can be split into an integer
-        number of patches of requested size and overlap. 
-        '''
-
-        image = self.checkImage(image)
-        
-        nx = (image.shape[3] - self.kernel_size[1]) / self.stride[1] + 1
-        ny = (image.shape[2] - self.kernel_size[0]) / self.stride[0] + 1
-
-        int_nx = (image.shape[3] - self.kernel_size[1]) // self.stride[1] + 1
-        int_ny = (image.shape[2] - self.kernel_size[0]) // self.stride[0] + 1
-        
-        new_nx = int_nx + 1 if int_nx != nx else int_nx
-        new_ny = int_ny + 1 if int_ny != ny else int_ny
-
-        new_px = (new_nx - 1) * self.stride[1] + self.kernel_size[1]
-        new_py = (new_ny - 1) * self.stride[0] + self.kernel_size[0]
-
-        padx = (new_px - image.shape[3]) // 2
-        pady = (new_py - image.shape[2]) // 2
-
-        #Only pad if you have to:
-        if padx > 0 or pady > 0:
-
-            self.padx, self.pady = padx, pady
-            
-            if device == torch.device("cuda:0"):
-
-                padded = torch.zeros(image.shape[0], image.shape[1], new_py, new_px)
-
-                for i in range(image.shape[1]):
-
-                    padded[:,i,...] = f.pad(
-                        image[:,i,...], 
-                        (self.padx, self.padx, self.pady, self.pady)
-                    )
-
-                return padded
-
-            else:
-
-                return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
-
-        else:
-
-            self.padx, self.pady = 0, 0
-            return image
-
-    def cropImage(self, image):
-
-        startx, stopx = self.padx, self.image_shape[3]-self.padx
-        starty, stopy = self.pady, self.image_shape[2]-self.pady
-
-        return image[:, :, starty:stopy, startx:stopx]
-
-    def split(self, image):
-                
-        image = self.padImage(image)
-        self.image_shape = image.shape
-
-        self.nx = (self.image_shape[3] - self.kernel_size[1]) // self.stride[1] + 1
-        self.ny = (self.image_shape[2] - self.kernel_size[0]) // self.stride[0] + 1
-
-        unfolded = self.unfolder(image.float())
-        
-        patches = unfolded.reshape(
-            self.image_shape[1], 
-            self.kernel_size[0], self.kernel_size[1], 
-            self.nx * self.ny
-            )
-
-        return patches.permute(3,0,1,2)
-
-    def join(self, patches):
-
-        patches = patches.permute(1, 2, 3, 0)
-        prefolded = patches.reshape(1, -1, self.nx * self.ny)
-
-        folder = nn.Fold(
-            output_size = self.image_shape[2:], 
+        self.checkImage(image)
+        self.calcDims()
+        self.folder = nn.Fold(
+            output_size = self.npix, 
             kernel_size = self.kernel_size,
             stride = self.stride
         )
-
-        reconstructed = folder(prefolded)
-        
-        # Divisor sorts out the normalisation; see torch.nn.Unfold documentation
-        if device == torch.device('cuda:0'):
-            im_ones = torch.cuda.FloatTensor(self.image_shape).fill_(1)
-        else:
-            im_ones = torch.ones(self.image_shape, dtype = float)
-        divisor = folder(self.unfolder(im_ones))
-        image = reconstructed / divisor
-        
-        return self.cropImage(image)
 
     def checkImage(self, image):
         
@@ -150,7 +59,103 @@ class splitImage():
         if (image.shape[-3] > image.shape[-2] or image.shape[-3] > image.shape[-1]):
             warnings.warn('It looks like the input image may not have the correct dimensions. Ensure: [channels, ydim, xdim]')
         
-        #image = image.permute(0, 3, 1, 2)
-        image = image.to(device)
+        self.image = image.to(device)
+
+    def calcDims(self):
         
-        return image
+        nx = (image.shape[3] - self.kernel_size[1]) / self.stride[1] + 1
+        ny = (image.shape[2] - self.kernel_size[0]) / self.stride[0] + 1
+
+        int_nx = (image.shape[3] - self.kernel_size[1]) // self.stride[1] + 1
+        int_ny = (image.shape[2] - self.kernel_size[0]) // self.stride[0] + 1
+        
+        self.npatches = (
+            int_ny + 1 if int_ny != ny else int_ny,
+            int_nx + 1 if int_nx != nx else int_nx
+            )
+
+        self.npix = (
+            (self.npatches[0] - 1) * self.stride[0] + self.kernel_size[0],
+            (self.npatches[1] - 1) * self.stride[1] + self.kernel_size[1]
+            )
+
+        self.padding = (
+            (self.npix[0] - self.image.shape[2]) // 2,
+            (self.npix[1] - self.image.shape[3]) // 2
+            )
+
+    def split(self):
+                
+        padded = self.padImage(self.image)
+
+        unfolded = self.unfolder(padded.float())
+        
+        patches = unfolded.reshape(
+            padded.shape[1], 
+            self.kernel_size[0], self.kernel_size[1], 
+            self.npatches[0] * self.npatches[1]
+            )
+
+        return patches.permute(3,0,1,2)
+
+    def padImage(self):
+        '''
+        Function to pad the image so that it can be split into an integer
+        number of patches of requested size and overlap. 
+        '''
+
+        #Only pad if you have to:
+        if self.padding[0] > 0 or self.padding[1] > 0:
+            if device == torch.device("cuda:0"):
+
+                padded = torch.zeros(
+                    self.image.shape[0], 
+                    self.image.shape[1], 
+                    self.npix[0], self.npix[1])
+
+                for i in range(image.shape[1]):
+                    padded[:,i,...] = f.pad(
+                        self.image[:,i,...], 
+                        (self.padding[1], self.padding[1], 
+                        self.padding[0], self.padding[0])
+                    )
+
+                return padded
+            else:
+                return f.pad(
+                    self.image, 
+                    (self.padding[1], self.padding[1], 
+                    self.padding[0], self.padding[0])
+                    )
+        else:
+            return image
+
+    def join(self, patches):
+
+        patches = patches.permute(1, 2, 3, 0)
+        prefolded = patches.reshape(
+            1, -1, self.npatches[0] * self.npatches[1]
+            )
+
+        reconstructed = self.folder(prefolded)
+        
+        # Divisor sorts out the normalisation; see torch.nn.Unfold documentation
+        if device == torch.device('cuda:0'):
+            im_ones = torch.cuda.FloatTensor(self.image_shape).fill_(1)
+        else:
+            im_ones = torch.ones(self.image_shape, dtype = float)
+        divisor = self.folder(self.unfolder(im_ones))
+        image = reconstructed / divisor
+        
+        return self.cropImage(image)
+
+    def cropImage(self):
+
+        startx, stopx = self.padding[1], self.npix[1]-self.padding[1]
+        starty, stopy = self.padding[0], self.npix[0]-self.padding[0]
+
+        return image[:, :, starty:stopy, startx:stopx]
+
+    
+
+    
