@@ -59,10 +59,15 @@ class splitImage():
         self.pady = (new_py - image.shape[2]) // 2
 
         if device == torch.device("cuda:0"):
+            padded = torch.zeros(image.shape[0], image.shape[1], new_py, new_px)
             for i in range(image.shape[1]):
-                f.pad(image[:,i,...], (self.padx, self.padx, self.pady, self.pady))
-
-        return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
+                padded[:,i,...] = f.pad(
+                    image[:,i,...], 
+                    (self.padx, self.padx, self.pady, self.pady)
+                    )
+            return padded
+        else
+            return f.pad(image, (self.padx, self.padx, self.pady, self.pady))
 
     def cropImage(self, image):
 

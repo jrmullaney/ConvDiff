@@ -212,7 +212,7 @@ class RealDataset(Dataset):
             toc = time.process_time()
             print('Reading:', toc-tic)
 
-            images = si.padImage(images[0,...])
+            images = si.padImage(images)
             ref = images[0,1,...]
             x = torch.arange(images.shape[2], dtype=int)
             y = torch.arange(images.shape[3], dtype=int)
