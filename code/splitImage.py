@@ -63,11 +63,11 @@ class splitImage():
 
     def calcDims(self):
         
-        nx = (image.shape[3] - self.kernel_size[1]) / self.stride[1] + 1
-        ny = (image.shape[2] - self.kernel_size[0]) / self.stride[0] + 1
+        nx = (self.image.shape[3] - self.kernel_size[1]) / self.stride[1] + 1
+        ny = (self.image.shape[2] - self.kernel_size[0]) / self.stride[0] + 1
 
-        int_nx = (image.shape[3] - self.kernel_size[1]) // self.stride[1] + 1
-        int_ny = (image.shape[2] - self.kernel_size[0]) // self.stride[0] + 1
+        int_nx = (self.image.shape[3] - self.kernel_size[1]) // self.stride[1] + 1
+        int_ny = (self.image.shape[2] - self.kernel_size[0]) // self.stride[0] + 1
         
         self.npatches = (
             int_ny + 1 if int_ny != ny else int_ny,
@@ -86,17 +86,17 @@ class splitImage():
 
     def split(self):
                 
-        padded = self.padImage(self.image)
+        self.padImage()
 
-        unfolded = self.unfolder(padded.float())
+        unfolded = self.unfolder(self.image.float())
         
         patches = unfolded.reshape(
-            padded.shape[1], 
+            self.image.shape[1], 
             self.kernel_size[0], self.kernel_size[1], 
             self.npatches[0] * self.npatches[1]
             )
 
-        return patches.permute(3,0,1,2)
+        self.patches = patches.permute(3,0,1,2)
 
     def padImage(self):
         '''
@@ -105,7 +105,8 @@ class splitImage():
         '''
 
         #Only pad if you have to:
-        if self.padding[0] > 0 or self.padding[1] > 0:
+        if (self.npix[0] > self.image.shape[2] or
+         self.npix[1] > self.image.shape[2]):
             if device == torch.device("cuda:0"):
 
                 padded = torch.zeros(
@@ -114,21 +115,19 @@ class splitImage():
                     self.npix[0], self.npix[1])
 
                 for i in range(image.shape[1]):
-                    padded[:,i,...] = f.pad(
+                    self.image[:,i,...] = f.pad(
                         self.image[:,i,...], 
                         (self.padding[1], self.padding[1], 
                         self.padding[0], self.padding[0])
                     )
 
-                return padded
             else:
-                return f.pad(
+                padded = f.pad(
                     self.image, 
                     (self.padding[1], self.padding[1], 
                     self.padding[0], self.padding[0])
                     )
-        else:
-            return image
+            self.image = padded
 
     def join(self, patches):
 
