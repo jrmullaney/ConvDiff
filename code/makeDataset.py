@@ -192,19 +192,25 @@ class RealDataset(Dataset):
        
         for i, file in enumerate(files):
 
+            tic_all = time.time()
+            tic = time.time()
             hdu = fits.open(file)
             ref = hdu[1].data
             if i == 0:
-                images = np.zeros([1, 6, ref.shape[0], ref.shape[1]])
+                images = np.zeros([1, 6, ref.shape[0], ref.shape[1]], dtype=float)
             images[0, 0,...] = ref # Ref
             images[0, 1,...] = hdu[2].data # Science
             images[0, 2,...] = hdu[3].data # Mask
             images[0, 3,...] = hdu[4].data # Truth
             hdu.close()
+            toc = time.time()
+#            print('Reading:', toc-tic)
             
             si = splitImage(images, kernel_size = patch_size, overlap = overlap)
             si.padImage()
-
+            tic = time.time()
+#            print('padding:', tic-toc)
+            
             if i == 0:
                 npatches = si.npatches[0] * si.npatches[1]
                 patches_all = torch.zeros(
@@ -217,16 +223,26 @@ class RealDataset(Dataset):
             yv, xv = torch.meshgrid(y, x)
             si.image[0,4,...] = yv
             si.image[0,5,...] = xv
-            
-            si.split()
 
+            si.to(device)
+            si.split()
+            toc = time.time()
+#            print('splitting:', toc-tic)
+            si.to(torch.device('cpu'))
+            tic = time.time()
+#            print('tocpu:',tic-toc)
+            
             yind = si.patches[:,4,...].long()
             xind = si.patches[:,5,...].long()
             si.patches[:,0,...] = si.image[0,0,yind,xind]
-            
+
             npatches = si.npatches[0] * si.npatches[1]
             patch_ind = torch.arange(npatches * i, npatches * (i+1), dtype=int)
             patches_all[patch_ind,:,:,:] = si.patches[:,[0,1,2,3],:,:]
+
+            toc = time.time()
+#            print('allocating:', toc-tic)
+            print('total:', toc - tic_all)
             
         self.image = patches_all[:,0:1,...]
         self.truth = patches_all[:,2,...]

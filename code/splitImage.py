@@ -41,6 +41,7 @@ class splitImage():
             kernel_size = self.kernel_size,
             stride = self.stride
         )
+        self.patches = None
 
     def checkImage(self, image):
         
@@ -58,8 +59,13 @@ class splitImage():
 
         if (image.shape[-3] > image.shape[-2] or image.shape[-3] > image.shape[-1]):
             warnings.warn('It looks like the input image may not have the correct dimensions. Ensure: [channels, ydim, xdim]')
-        
-        self.image = image.to(device)
+
+        self.image = image.float()
+
+    def to(self, device):
+        self.image = self.image.to(device).float()
+        if self.patches is not None:
+            self.patches = self.patches.to(device).float()
 
     def calcDims(self):
         
@@ -106,16 +112,15 @@ class splitImage():
 
         #Only pad if you have to:
         if (self.npix[0] > self.image.shape[2] or
-         self.npix[1] > self.image.shape[2]):
-            if device == torch.device("cuda:0"):
-
+         self.npix[1] > self.image.shape[3]):
+            if self.image.device == torch.device("cuda:0"):
                 padded = torch.zeros(
                     self.image.shape[0], 
                     self.image.shape[1], 
                     self.npix[0], self.npix[1])
 
-                for i in range(image.shape[1]):
-                    self.image[:,i,...] = f.pad(
+                for i in range(self.image.shape[1]):
+                    padded[:,i,...] = f.pad(
                         self.image[:,i,...], 
                         (self.padding[1], self.padding[1], 
                         self.padding[0], self.padding[0])
