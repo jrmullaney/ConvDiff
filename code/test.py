@@ -25,7 +25,7 @@ image = np.repeat(image[np.newaxis, :, :], 2, axis=0)
 image[1,...] = hdu[2].data
 image = torch.from_numpy(image).to(device)
 
-patchsize = 600
+patchsize = 720
 overlap = 16
 si = splitImage(patchsize, overlap)
 patches = si.split(image)
