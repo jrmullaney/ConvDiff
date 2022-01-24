@@ -15,7 +15,7 @@ criterion = nn.L1Loss()
 optimizer = optim.Adam(net.parameters())
 
 # Generate and load the dataset
-dataset = RealDataset('../data/train/*.fits', 512, 0)
+dataset = RealDataset('../data/train/inj_r25516*.fits', 512, 0)
 loader = DataLoader(dataset, batch_size=1, num_workers=2, shuffle=True)
 
 for epoch in range(2):
