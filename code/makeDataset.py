@@ -241,19 +241,22 @@ class RealDataset(Dataset):
             patches_all[patch_ind,:,:,:] = si.patches[:,[0,1,2,3],:,:]
 
             toc = time.time()
+            #print(patches_all[:,[2],...].shape)
 #            print('allocating:', toc-tic)
+
             print('total:', toc - tic_all)
-            
-        self.image = patches_all[:,0:1,...]
-        self.truth = patches_all[:,2,...]
-        self.focus = patches_all[:,3,...]
+
+        self.image = patches_all[:,[0,1],...]
+        self.truth = patches_all[:,[2],...]
+        self.focus = patches_all[:,[3],...]
+        #print('truth', self.truth.shape)
         
     def __len__(self):
         return len(self.image)
     
     def __getitem__(self, idx):
         return (
-            self.image[idx,:,:,:], 
+            self.image[idx,:,:,:],
             self.truth[idx,:,:,:], 
             self.focus[idx,:,:,:]
         )
